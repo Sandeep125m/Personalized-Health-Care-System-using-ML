@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Health Care Center</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #1e1e1e;
+            color: #ffffff;
+        }
+
+        .logo {
+            width: 50px;
+            height: 50px;
+            color: black;
+            margin-top: 0;
+            margin-left: 2px;
+        }
+
+        .myimg {
+            width: 50px;
+            height: 50px;
+            border: 2px solid black;
+            border-radius: 25px;
+        }
+
+        .nav-tabs .nav-link {
+            background-color: #2d2d2d;
+            color: #ffffff;
+            border: none;
+            border-radius: 0;
+            margin-right: 2px;
+        }
+
+        .nav-tabs .nav-link.active {
+            background-color: #3e3e3e;
+            color: #00ffae;
+        }
+
+        .tab-content {
+            background-color: #2b2b2b;
+            color: white;
+            min-height: 200px;
+        }
+
+        .terminal-style {
+            background-color: #1e1e1e;
+            color: #00ffae;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .terminal-input-wrapper {
+    background-color: #1e1e1e;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #444;
+    color: white;
+    font-family: monospace;
+    position: relative;
+  }
+
+  #symptom-input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #fff;
+    width: 100%;
+    font-size: 16px;
+    padding: 4px;
+  }
+
+  .suggestions-box {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: #2b2b2b;
+    width: 100%;
+    max-height: 150px;
+    overflow-y: auto;
+    border: 1px solid #444;
+    z-index: 100;
+    display: none;
+  }
+
+  .suggestions-box div {
+    padding: 8px 10px;
+    cursor: pointer;
+  }
+
+  .suggestions-box div:hover {
+    background-color: #444;
+  }
+
+  .selected-box {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .tag {
+    background-color: #444;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+  }
+
+  .tag .remove {
+    margin-left: 6px;
+    cursor: pointer;
+    color: red;
+  }
+
+    </style>
+  </head>
+  <body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <div class="logo">
+                <img class="myimg" src="{{ url_for('static', filename='logo.png') }}" alt="">
+            </div>
+
+            <a class="navbar-brand" href="#">Health Center</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item"><a class="nav-link active" href="#">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/about">About</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/contact">Contact</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/developer">Developer</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/blog">Blog</a></li>
+                </ul>
+                <form class="d-flex">
+                    <input class="form-control me-2" type="search" placeholder="Search">
+                    <button class="btn btn-outline-success" type="submit">Search</button>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container my-5">
+  <div class="row justify-content-center">
+    {% if not predicted_disease %}
+    <!-- Centered Form Before Prediction -->
+    <div class="col-md-6">
+      <div class="terminal-style p-4 rounded">
+        <h3 class="text-center text-success">Health Care Center</h3>
+        <form action="/predict" method="post">
+          <div class="form-group">
+            <label for="symptoms">Select Symptoms:</label>
+            <div class="terminal-input-wrapper">
+            <input type="text" id="symptom-input" placeholder="Type symptoms..." autocomplete="off" />
+            <div id="suggestions" class="suggestions-box"></div>
+            <div id="selected-symptoms" class="selected-box"></div>
+        </div>
+              <!-- Hidden input to send selected symptoms as a comma-separated string -->
+              <input type="hidden" name="symptoms" id="symptoms-hidden">
+          </div>
+          <br>
+          <button type="button" id="startSpeechRecognition" class="btn btn-primary">Start Speech Recognition</button>
+          <br><br>
+          <div id="transcription"></div>
+
+          {% if message %}
+            <p>{{ message }}</p>
+          {% endif %}
+
+          <br>
+          <button type="submit" class="btn btn-danger btn-lg w-100">Predict</button>
+        </form>
+      </div>
+    </div>
+    {% else %}
+    <!-- Side-by-Side Layout After Prediction -->
+    <div class="col-md-6">
+      <div class="terminal-style p-4 rounded">
+        <h3 class="text-center text-success">Health Care Center</h3>
+        <form action="/predict" method="post">
+          <div class="form-group">
+            <label for="symptoms">Select Symptoms:</label>
+            <input type="text" class="form-control bg-dark text-white" id="symptoms" name="symptoms" placeholder="e.g., itching, sleeping, aching etc">
+          </div>
+          <br>
+          <button type="button" id="startSpeechRecognition" class="btn btn-primary">Start Speech Recognition</button>
+          <br><br>
+          <div id="transcription"></div>
+
+          {% if message %}
+            <p>{{ message }}</p>
+          {% endif %}
+
+          <br>
+          <button type="submit" class="btn btn-danger btn-lg w-100">Predict</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Results Section with Tabs -->
+    <div class="col-md-6 mt-4 mt-md-0">
+      <div class="terminal-style p-4 rounded">
+        <h4 class="text-info">Prediction Results</h4>
+        <ul class="nav nav-tabs" id="resultTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="disease-tab" data-bs-toggle="tab" data-bs-target="#disease" type="button" role="tab">Disease</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="description-tab" data-bs-toggle="tab" data-bs-target="#description" type="button" role="tab">Description</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="precaution-tab" data-bs-toggle="tab" data-bs-target="#precaution" type="button" role="tab">Precaution</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="medications-tab" data-bs-toggle="tab" data-bs-target="#medications" type="button" role="tab">Medications</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="workouts-tab" data-bs-toggle="tab" data-bs-target="#workouts" type="button" role="tab">Workouts</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="diets-tab" data-bs-toggle="tab" data-bs-target="#diets" type="button" role="tab">Diets</button>
+          </li>
+        </ul>
+        <div class="tab-content mt-3" id="resultTabsContent">
+          <div class="tab-pane fade show active" id="disease" role="tabpanel">
+            <strong>Disease:</strong> {{ predicted_disease }}
+          </div>
+          <div class="tab-pane fade" id="description" role="tabpanel">
+            <strong>Description:</strong> {{ dis_des }}
+          </div>
+          <div class="tab-pane fade" id="precaution" role="tabpanel">
+            <strong>Precautions:</strong>
+            <ul>
+              {% for i in my_precautions %}
+                <li>{{ i }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+          <div class="tab-pane fade" id="medications" role="tabpanel">
+            <strong>Medications:</strong>
+            <ul>
+              {% for i in medications %}
+                <li>{{ i }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+          <div class="tab-pane fade" id="workouts" role="tabpanel">
+            <strong>Workouts:</strong>
+            <ul>
+              {% for i in workout %}
+                <li>{{ i }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+          <div class="tab-pane fade" id="diets" role="tabpanel">
+            <strong>Diets:</strong>
+            <ul>
+              {% for i in my_diet %}
+                <li>{{ i }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+    <script>
+      const startSpeechRecognitionButton = document.getElementById('startSpeechRecognition');
+      const transcriptionDiv = document.getElementById('transcription');
+
+      startSpeechRecognitionButton.addEventListener('click', startSpeechRecognition);
+
+      function startSpeechRecognition() {
+          const recognition = new webkitSpeechRecognition();
+          recognition.lang = 'en-US';
+
+          recognition.onresult = function (event) {
+              const result = event.results[0][0].transcript;
+              transcriptionDiv.textContent = result;
+          };
+
+          recognition.onend = function () {
+              console.log('Speech recognition ended.');
+          };
+
+          recognition.start();
+      }
+    </script>
+
+    <script>
+  const allSymptoms = {{ symptom_list|default([])|tojson }};
+  const input = document.getElementById("symptom-input");
+  const suggestions = document.getElementById("suggestions");
+  const selectedBox = document.getElementById("selected-symptoms");
+  const hiddenInput = document.getElementById("symptoms-hidden");
+  let selected = [];
+
+  input.addEventListener("input", function () {
+    const value = this.value.toLowerCase();
+    suggestions.innerHTML = "";
+    if (value === "") {
+      suggestions.style.display = "none";
+      return;
+    }
+
+    const matches = allSymptoms.filter(symptom => symptom.includes(value) && !selected.includes(symptom));
+    matches.forEach(symptom => {
+      const div = document.createElement("div");
+      div.textContent = symptom.replace(/_/g, ' ');
+      div.onclick = () => {
+        selected.push(symptom);
+        updateSelectedBox();
+        this.value = "";
+        suggestions.innerHTML = "";
+        suggestions.style.display = "none";
+      };
+      suggestions.appendChild(div);
+    });
+
+    suggestions.style.display = matches.length > 0 ? "block" : "none";
+  });
+
+  function updateSelectedBox() {
+    selectedBox.innerHTML = "";
+    selected.forEach(symptom => {
+      const tag = document.createElement("div");
+      tag.className = "tag";
+      tag.textContent = symptom.replace(/_/g, ' ');
+      const remove = document.createElement("span");
+      remove.className = "remove";
+      remove.innerHTML = "&times;";
+      remove.onclick = () => {
+        selected = selected.filter(s => s !== symptom);
+        updateSelectedBox();
+      };
+      tag.appendChild(remove);
+      selectedBox.appendChild(tag);
+    });
+
+    // Update hidden input to send with form
+    hiddenInput.value = selected.join(",");
+  }
+
+  // Optional: Close suggestions when clicking outside
+  document.addEventListener("click", function (e) {
+    if (!document.querySelector(".terminal-input-wrapper").contains(e.target)) {
+      suggestions.style.display = "none";
+    }
+  });
+</script>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>
